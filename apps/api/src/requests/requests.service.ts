@@ -151,14 +151,19 @@ export class RequestsService {
   }
 
   async getClassifications(category?: string) {
-    const list = await this.classifications
+    const query = this.classifications
       .createQueryBuilder('c')
       .leftJoin('c.request', 'r')
       .addSelect(['r.id', 'r.message'])
-      .where(category ? 'c.category = :category' : '1=1', { category })
+      .where(category ? 'c.category LIKE %:category%' : '1=1', { category })
       .orderBy('c.createdAt', 'DESC')
-      .take(100)
-      .getMany();
+      .take(100);
+
+    if (category) {
+      query.where('c.category ILIKE :category', { category: `%${category}%` });
+    }
+
+    const list = await query.getMany();
 
     return list;
   }

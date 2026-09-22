@@ -1,11 +1,18 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchHistory } from '@/lib/api';
 
 export default function HistoryPage() {
+  const [input, setInput] = useState('');
   const [category, setCategory] = useState('');
+
+  useEffect(() => {
+    const id = setTimeout(() => setCategory(input), 3000);
+    return () => clearTimeout(id);
+  }, [input]);
+
   const historyQuery = useQuery({
     queryKey: ['history', category],
     queryFn: () => fetchHistory(category || undefined),
@@ -27,19 +34,14 @@ export default function HistoryPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold">Classification history</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Persist classifications (schema + migration), then make this view list
-          and filter them. The classifier belongs behind a provider interface
-          that could later be an LLM — see core task 5 in the README.
-        </p>
       </div>
 
       <label className="flex max-w-sm flex-col gap-1 text-sm">
         <span className="font-medium text-slate-700">Filter by category</span>
         <input
           className="rounded border border-slate-300 px-3 py-2"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           placeholder="billing | sales | support | unknown"
         />
       </label>
