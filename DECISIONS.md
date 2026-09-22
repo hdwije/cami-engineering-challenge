@@ -21,6 +21,7 @@ Next moved to Task 5:
 
 - it tooks bit time to understand what is exact the requirement. To maintain the history of classifications I created a new entity call Classification and wire it with the classifications table. After create to to generate the migration file for "classifications create" I use claude code.
 - To insert a record to classification I had to update the classify function. But since it already has a insert query for update the custore_request table I used database transactions to run multiple queries. Within the transaction I added the insert and update functions. For this I had change the constructor of the requests.service. Since I changed the classify function I executed the test cases again and 2 cases were failed because I changed the constructor of the requests.service. I fixed the issues in test cases and executes it (I just change the object initializations of the test cases).
+- Retrieve classifications with 100 records cap. Newest first. That bound the oldest records unreachable. Since the signature doesn't have any paging params I made cape 100.
 
 ## Assumptions
 
@@ -49,7 +50,10 @@ Next moved to Task 5:
 What you implemented for history / provider seam, and what you left out.
 
 - Created a new Entity called "Classification".
-- The table grows without bound, one row per classification click, and there is no retention policy. Not a problem at this scale, but it is the thing that would need attention first.
+- The table grows without bound, one row per classification click, and there is no retention policy. Not a problem at this scale, but it is the thing that would need attention first
+- Returns the 100 newest rows.The table grows by one row per classification and is never pruned, so an uncapped query would keep growing. The cost is that older entries are unreachable until pagination exists, which is the first thing I would add.
+- /requests/history does not validate the category value. The filter in the UI is free text, so an unrecognised value returning an empty list is the right behaviour. I didn't return 400 since it is not match with the UI. The column is also text rather than an enum, so new categories need no migration.
+- No unit test for getClassifications function in the requests.service. It is a thin repository query, so a test would mostly assert that TypeORM works. I put the test effort into the classification rules instead, since that is where the logic lives.
 
 ## Stretch (if any)
 
