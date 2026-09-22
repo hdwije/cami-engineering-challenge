@@ -21,7 +21,7 @@ Next moved to Task 5:
 
 - it tooks bit time to understand what is exact the requirement. To maintain the history of classifications I created a new entity call Classification and wire it with the classifications table. After create to to generate the migration file for "classifications create" I use claude code.
 - To insert a record to classification I had to update the classify function. But since it already has a insert query for update the custore_request table I used database transactions to run multiple queries. Within the transaction I added the insert and update functions. For this I had change the constructor of the requests.service. Since I changed the classify function I executed the test cases again and 2 cases were failed because I changed the constructor of the requests.service. I fixed the issues in test cases and executes it (I just change the object initializations of the test cases).
-- Retrieve classifications with 100 records cap. Newest first. That bound the oldest records unreachable. Since the signature doesn't have any paging params I made cape 100.
+- Retrieve classifications with 100 records cap. Newest first. That bound the oldest records unreachable. Since the signature doesn't have any paging params I made cape 100. Since I updated the constructor with the Classification repository, re-ran the test cases and got failed. Updated the test cases with the correct constructor.
 
 ## Assumptions
 

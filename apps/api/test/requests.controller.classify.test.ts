@@ -7,6 +7,7 @@ import { RequestsService } from '../src/requests/requests.service';
 import { KeywordClassifier } from '../src/requests/keyword-classifier';
 import { DataSource, Repository } from 'typeorm';
 import { CustomerRequest } from '../src/requests/customer-request.entity';
+import { Classification } from '../src/requests/classification.entity';
 
 function messagesFor(errors: Awaited<ReturnType<typeof validate>>): string[] {
   return errors.flatMap((error) => Object.values(error.constraints ?? {}));
@@ -32,6 +33,7 @@ describe('RequestsService.classify / RequestsController.classify', () => {
   const classifier = new KeywordClassifier();
   const service = new RequestsService(
     {} as Repository<CustomerRequest>,
+    {} as Repository<Classification>,
     {} as DataSource,
     classifier,
   );
@@ -55,6 +57,7 @@ describe('RequestsService.classify / RequestsController.classify', () => {
     } as any;
     const weakService = new RequestsService(
       {} as Repository<CustomerRequest>,
+      {} as Repository<Classification>,
       {} as DataSource,
       stubClassifier,
     );
