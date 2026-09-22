@@ -29,7 +29,7 @@ describe('ClassifyDto validation', () => {
 describe('RequestsService.classify / RequestsController.classify', () => {
   const classifier = new KeywordClassifier();
   const service = new RequestsService({} as any, classifier);
-  const controller = new RequestsController(service, classifier);
+  const controller = new RequestsController(service);
 
   it('softens confidence for very short messages (service and controller agree)', async () => {
     const dto = { message: 'urgent bug' } as ClassifyDto;
@@ -48,7 +48,7 @@ describe('RequestsService.classify / RequestsController.classify', () => {
       classify: () => ({ category: 'support', confidence: 0.5 }),
     } as any;
     const weakService = new RequestsService({} as any, stubClassifier);
-    const weakController = new RequestsController(weakService, stubClassifier);
+    const weakController = new RequestsController(weakService);
     const dto = { message: 'just letting you know' } as ClassifyDto;
 
     const serviceResult = await weakService.classify(dto);
