@@ -32,11 +32,13 @@ export default function HomePage() {
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: RequestStatus }) =>
       updateRequestStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['requests'] }),
   });
 
   const classifyMutation = useMutation({
     mutationFn: ({ id, message }: { id: string; message: string }) =>
       classifyMessage(message, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['requests'] }),
   });
 
   if (requestsQuery.isLoading) {
@@ -59,8 +61,8 @@ export default function HomePage() {
       <div>
         <h2 className="text-xl font-semibold">Open requests</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Update status or run classification. Seeded volume is intentional — watch API
-          behaviour under load.
+          Update status or run classification. Seeded volume is intentional —
+          watch API behaviour under load.
         </p>
       </div>
 
@@ -104,7 +106,9 @@ export default function HomePage() {
             {requests.slice(0, 25).map((row) => (
               <tr key={row.id}>
                 <td className="max-w-md px-4 py-3">
-                  <div className="font-medium text-slate-900">{row.message}</div>
+                  <div className="font-medium text-slate-900">
+                    {row.message}
+                  </div>
                   {row.latestNotePreview ? (
                     <div className="mt-1 text-xs text-slate-500">
                       Latest note: {row.latestNotePreview}
@@ -143,7 +147,10 @@ export default function HomePage() {
                     type="button"
                     className="rounded bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
                     onClick={() =>
-                      classifyMutation.mutate({ id: row.id, message: row.message })
+                      classifyMutation.mutate({
+                        id: row.id,
+                        message: row.message,
+                      })
                     }
                   >
                     Classify
@@ -156,7 +163,9 @@ export default function HomePage() {
       </div>
 
       {(statusMutation.isSuccess || classifyMutation.isSuccess) && (
-        <p className="text-sm text-slate-600">Last action reported success from the API.</p>
+        <p className="text-sm text-slate-600">
+          Last action reported success from the API.
+        </p>
       )}
     </div>
   );

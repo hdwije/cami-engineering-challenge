@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { CustomerRequest, RequestStatus } from './customer-request.entity';
-import { RequestNote } from './request-note.entity';
+import { ClassifyDto } from './dtos';
+import { Classification } from './classification.entity';
+import {
+  CLASSIFICATION_PROVIDER,
+  ClassificationCategory,
+  ClassificationProvider,
+} from './classification-provider.interface';
 
 export type RequestListItem = {
   id: string;
@@ -21,37 +27,40 @@ export class RequestsService {
   constructor(
     @InjectRepository(CustomerRequest)
     private readonly requests: Repository<CustomerRequest>,
-    @InjectRepository(RequestNote)
-    private readonly notes: Repository<RequestNote>,
+    @InjectRepository(Classification)
+    private readonly classifications: Repository<Classification>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+    @Inject(CLASSIFICATION_PROVIDER)
+    private readonly classifier: ClassificationProvider,
   ) {}
 
   async list(): Promise<RequestListItem[]> {
-    const rows = await this.requests.find({
-      order: { createdAt: 'DESC' },
-    });
+    const { entities, raw } = await this.requests
+      .createQueryBuilder('request')
+      .leftJoin('request.notes', 'note')
+      .addSelect('COUNT(note.id)', 'noteCount')
+      .addSelect(
+        `(SELECT n.body FROM request_notes n
+      WHERE n.request_id = request.id
+      ORDER BY n.created_at DESC LIMIT 1)`,
+        'latestNotePreview',
+      )
+      .groupBy('request.id')
+      .orderBy('request.createdAt', 'DESC')
+      .getRawAndEntities();
 
-    const items: RequestListItem[] = [];
-    for (const row of rows) {
-      const notes = await this.notes.find({
-        where: { requestId: row.id },
-        order: { createdAt: 'DESC' },
-      });
-      row.notes = notes;
-
-      items.push({
-        id: row.id,
-        message: row.message,
-        status: row.status,
-        category: row.category,
-        confidence: row.confidence,
-        noteCount: notes.length,
-        latestNotePreview: notes[0]?.body ?? null,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      });
-    }
-
-    return items;
+    return entities.map((row, i) => ({
+      id: row.id,
+      message: row.message,
+      status: row.status,
+      category: row.category,
+      confidence: row.confidence,
+      noteCount: Number(raw[i].noteCount),
+      latestNotePreview: raw[i].latestNotePreview ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    }));
   }
 
   async getById(id: string): Promise<CustomerRequest> {
@@ -65,7 +74,10 @@ export class RequestsService {
     return row;
   }
 
-  async updateStatus(id: string, status: RequestStatus): Promise<CustomerRequest> {
+  async updateStatus(
+    id: string,
+    status: RequestStatus,
+  ): Promise<CustomerRequest> {
     const row = await this.getById(id);
     row.status = status;
     return this.requests.save(row);
@@ -83,5 +95,76 @@ export class RequestsService {
 
   async save(request: CustomerRequest): Promise<CustomerRequest> {
     return this.requests.save(request);
+  }
+
+  async classify({ message, requestId }: ClassifyDto): Promise<{
+    category: ClassificationCategory;
+    confidence: number;
+    requestId: string | null;
+  }> {
+    const trimmed = message.trim();
+    let result = this.classifier.classify(trimmed);
+
+    // Soften confidence for very short messages.
+    if (trimmed.split(/\s+/).length < 3 && result.category !== 'unknown') {
+      result = {
+        category: result.category,
+        confidence: Math.max(0.5, result.confidence - 0.15),
+      };
+    }
+
+    // Prefer "unknown" when confidence is weak.
+    if (result.confidence < 0.55) {
+      result = { category: 'unknown', confidence: result.confidence };
+    }
+
+    if (requestId) {
+      await this.dataSource.transaction(async (entityManager) => {
+        const existing = await entityManager.findOneBy(CustomerRequest, {
+          id: requestId,
+        });
+
+        if (!existing) throw new NotFoundException('Request is not found!');
+
+        existing.category = result.category;
+        existing.confidence = result.confidence;
+
+        if (existing.status === 'open') {
+          existing.status = 'in_progress';
+        }
+
+        await entityManager.save(existing);
+        await entityManager.insert(Classification, {
+          request: existing,
+          category: result.category,
+          confidence: result.confidence,
+          provider: this.classifier.name,
+        });
+      });
+    }
+
+    return {
+      category: result.category,
+      confidence: result.confidence,
+      requestId: requestId ?? null,
+    };
+  }
+
+  async getClassifications(category?: string) {
+    const query = this.classifications
+      .createQueryBuilder('c')
+      .leftJoin('c.request', 'r')
+      .addSelect(['r.id', 'r.message'])
+      .where(category ? 'c.category LIKE %:category%' : '1=1', { category })
+      .orderBy('c.createdAt', 'DESC')
+      .take(100);
+
+    if (category) {
+      query.where('c.category ILIKE :category', { category: `%${category}%` });
+    }
+
+    const list = await query.getMany();
+
+    return list;
   }
 }
