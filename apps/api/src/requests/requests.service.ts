@@ -3,6 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CustomerRequest, RequestStatus } from './customer-request.entity';
 import { RequestNote } from './request-note.entity';
+import { ClassifyDto } from './dtos';
+import {
+  ClassificationCategory,
+  KeywordClassifier,
+} from './keyword-classifier';
 
 export type RequestListItem = {
   id: string;
@@ -21,8 +26,7 @@ export class RequestsService {
   constructor(
     @InjectRepository(CustomerRequest)
     private readonly requests: Repository<CustomerRequest>,
-    @InjectRepository(RequestNote)
-    private readonly notes: Repository<RequestNote>,
+    private readonly classifier: KeywordClassifier,
   ) {}
 
   async list(): Promise<RequestListItem[]> {
@@ -85,5 +89,43 @@ export class RequestsService {
 
   async save(request: CustomerRequest): Promise<CustomerRequest> {
     return this.requests.save(request);
+  }
+
+  async classify({ message, requestId }: ClassifyDto): Promise<{
+    category: ClassificationCategory;
+    confidence: number;
+    requestId: string | null;
+  }> {
+    const trimmed = message.trim();
+    let result = this.classifier.classify(trimmed);
+
+    // Soften confidence for very short messages.
+    if (trimmed.split(/\s+/).length < 3 && result.category !== 'unknown') {
+      result = {
+        category: result.category,
+        confidence: Math.max(0.5, result.confidence - 0.15),
+      };
+    }
+
+    // Prefer "unknown" when confidence is weak.
+    if (result.confidence < 0.55) {
+      result = { category: 'unknown', confidence: result.confidence };
+    }
+
+    if (requestId) {
+      const existing: any = await this.getById(requestId);
+      existing.category = result.category;
+      existing.confidence = result.confidence;
+      if (existing.status === 'open') {
+        existing.status = 'in_progress';
+      }
+      await this.save(existing);
+    }
+
+    return {
+      category: result.category,
+      confidence: result.confidence,
+      requestId: requestId ?? null,
+    };
   }
 }
