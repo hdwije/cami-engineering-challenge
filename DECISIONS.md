@@ -1,7 +1,5 @@
 # Decisions
 
-Use this file to record assumptions, trade-offs, prioritisation, and anything you cut.
-
 ## Prioritisation
 
 I read the all five tasks first before changing anything. Started with Task 3 because a failing pipeline means I can't trust anything else I verify later. Get that green first, then everything after it has a real signal.
@@ -50,8 +48,6 @@ Next moved to Task 5:
 
 ## Classification history scope
 
-What you implemented for history / provider seam, and what you left out.
-
 - Created a new Entity called "Classification".
 - The table grows without bound, one row per classification click, and there is no retention policy. Not a problem at this scale, but it is the thing that would need attention first
 - Returns the 100 newest rows.The table grows by one row per classification and is never pruned, so an uncapped query would keep growing. The cost is that older entries are unreachable until pagination exists, which is the first thing I would add.
@@ -60,6 +56,8 @@ What you implemented for history / provider seam, and what you left out.
 - The service called KeywordClassifier directly, so using a different classifier would have meant changing the service. It now depends on a ClassificationProvider interface instead, and the module decides which implementation to supply. Adding an LLM classifier later is a one line change there.
 - Used debounce technique to filter classifications.
 
-## Stretch (if any)
-
 ## What you would do with more time
+
+- Introduce a repository port for request data access, the same pattern as the classifier provider. The service currently knows about TypeORM query builders directly. I would apply it only where it earns its place rather than wrapping every query.
+- Pagination on both /requests and /requests/history, with a total count.
+
