@@ -11,9 +11,17 @@ I read the all five tasks first before changing anything. Started with Task 3 be
 For Task 3 I went through ci.yml step by step and executed each command locally. All
 of them passed, which was the confusing part. Then I noticed the postgres service creates one database called cami, but the Migrate step overrides DATABASE_URL to cami_app. Nothing in the workflow creates that database. So locally it works because my shell points at cami, and on GitHub it breaks because the step override the DATABASE_URL to cami_app. Removed the override so the step uses the job level env DATABASE_URL.
 
+Next I moved to Task 1. There issue was retrived each requests notes nestedly. But we can retrive notes from one query using joins. That fix the nested issue. But there was an issue still remaining which was to take the latest note it loads all the notes to the memory. To prevent this I used aggregated query that uses sub query to retrieve latest note of the each request. I didn't change the response shape. So no change it the web app.
+
+But still there is an issue that if the request count is getting higher we have to use pagination or load more feature for this.
+
 ## Assumptions
 
+- - Returning the full list without pagination is the current intended behaviour, not a bug to fix as part of this task.
+
 ## Trade-offs
+
+- In Task 1, because of the aggregated query it give less load on the Node process but high weight on the database server because each request it has to run a sub query. It doesn't care about the notes, but the requests.
 
 ## Classification history scope
 
