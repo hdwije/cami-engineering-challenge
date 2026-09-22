@@ -26,32 +26,31 @@ export class RequestsService {
   ) {}
 
   async list(): Promise<RequestListItem[]> {
-    const rows = await this.requests.find({
-      order: { createdAt: 'DESC' },
-    });
+    const { entities, raw } = await this.requests
+      .createQueryBuilder('request')
+      .leftJoin('request.notes', 'note')
+      .addSelect('COUNT(note.id)', 'noteCount')
+      .addSelect(
+        `(SELECT n.body FROM request_notes n
+      WHERE n.request_id = request.id
+      ORDER BY n.created_at DESC LIMIT 1)`,
+        'latestNotePreview',
+      )
+      .groupBy('request.id')
+      .orderBy('request.createdAt', 'DESC')
+      .getRawAndEntities();
 
-    const items: RequestListItem[] = [];
-    for (const row of rows) {
-      const notes = await this.notes.find({
-        where: { requestId: row.id },
-        order: { createdAt: 'DESC' },
-      });
-      row.notes = notes;
-
-      items.push({
-        id: row.id,
-        message: row.message,
-        status: row.status,
-        category: row.category,
-        confidence: row.confidence,
-        noteCount: notes.length,
-        latestNotePreview: notes[0]?.body ?? null,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: row.updatedAt.toISOString(),
-      });
-    }
-
-    return items;
+    return entities.map((row, i) => ({
+      id: row.id,
+      message: row.message,
+      status: row.status,
+      category: row.category,
+      confidence: row.confidence,
+      noteCount: Number(raw[i].noteCount),
+      latestNotePreview: raw[i].latestNotePreview ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    }));
   }
 
   async getById(id: string): Promise<CustomerRequest> {
@@ -65,7 +64,10 @@ export class RequestsService {
     return row;
   }
 
-  async updateStatus(id: string, status: RequestStatus): Promise<CustomerRequest> {
+  async updateStatus(
+    id: string,
+    status: RequestStatus,
+  ): Promise<CustomerRequest> {
     const row = await this.getById(id);
     row.status = status;
     return this.requests.save(row);
