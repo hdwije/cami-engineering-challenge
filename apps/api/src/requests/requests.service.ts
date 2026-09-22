@@ -151,15 +151,14 @@ export class RequestsService {
   }
 
   async getClassifications(category?: string) {
-    const where: FindOptionsWhere<Classification> = category
-      ? { category: category.trim() }
-      : {};
-
-    const list = await this.classifications.find({
-      where,
-      order: { createdAt: 'DESC' },
-      take: 100,
-    });
+    const list = await this.classifications
+      .createQueryBuilder('c')
+      .leftJoin('c.request', 'r')
+      .addSelect(['r.id', 'r.message'])
+      .where(category ? 'c.category = :category' : '1=1', { category })
+      .orderBy('c.createdAt', 'DESC')
+      .take(100)
+      .getMany();
 
     return list;
   }
