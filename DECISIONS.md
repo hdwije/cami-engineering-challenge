@@ -4,8 +4,6 @@ Use this file to record assumptions, trade-offs, prioritisation, and anything yo
 
 ## Prioritisation
 
-What did you tackle first, what did you defer, and why?
-
 I read the all five tasks first before changing anything. Started with Task 3 because a failing pipeline means I can't trust anything else I verify later. Get that green first, then everything after it has a real signal.
 
 For Task 3 I went through ci.yml step by step and executed each command locally. All
@@ -19,7 +17,10 @@ Then I moved to Task 2 which is the cached issue. Once we change the status or c
 
 Then I moved to Task 4. There I have to bring the business logic to service layer. So I have to create the test cases for what currently controller validate and the return object. For request validation I install class-validator and class-transformer libraries and created a DTO class for classify request. So request body validated by the Validation Pipe and "Soften confidence for very short messages" and "Prefer "unknown" when confidence is weak." keeps in the same function body. Since I changed the controller I created a test cases for this in the "requests.controller.classify.test.ts" file and test it after done the changes.
 
-Next moved to Task 5 and it tooks bit time to understand what is exact the requirement. To maintain the history of classifications I created a new entity call Classification and wire it with the classifications table. After create to to generate the migration file for "classifications create" I use claude code.
+Next moved to Task 5:
+
+- it tooks bit time to understand what is exact the requirement. To maintain the history of classifications I created a new entity call Classification and wire it with the classifications table. After create to to generate the migration file for "classifications create" I use claude code.
+- To insert a record to classification I had to update the classify function. But since it already has a insert query for update the custore_request table I used database transactions to run multiple queries. Within the transaction I added the insert and update functions. For this I had change the constructor of the requests.service. Since I changed the classify function I executed the test cases again and 2 cases were failed because I changed the constructor of the requests.service. I fixed the issues in test cases and executes it (I just change the object initializations of the test cases).
 
 ## Assumptions
 
