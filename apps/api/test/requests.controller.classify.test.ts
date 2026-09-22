@@ -5,6 +5,8 @@ import { ClassifyDto } from '../src/requests/dtos';
 import { RequestsController } from '../src/requests/requests.controller';
 import { RequestsService } from '../src/requests/requests.service';
 import { KeywordClassifier } from '../src/requests/keyword-classifier';
+import { DataSource, Repository } from 'typeorm';
+import { CustomerRequest } from '../src/requests/customer-request.entity';
 
 function messagesFor(errors: Awaited<ReturnType<typeof validate>>): string[] {
   return errors.flatMap((error) => Object.values(error.constraints ?? {}));
@@ -28,7 +30,11 @@ describe('ClassifyDto validation', () => {
 
 describe('RequestsService.classify / RequestsController.classify', () => {
   const classifier = new KeywordClassifier();
-  const service = new RequestsService({} as any, classifier);
+  const service = new RequestsService(
+    {} as Repository<CustomerRequest>,
+    {} as DataSource,
+    classifier,
+  );
   const controller = new RequestsController(service);
 
   it('softens confidence for very short messages (service and controller agree)', async () => {
@@ -47,7 +53,11 @@ describe('RequestsService.classify / RequestsController.classify', () => {
     const stubClassifier = {
       classify: () => ({ category: 'support', confidence: 0.5 }),
     } as any;
-    const weakService = new RequestsService({} as any, stubClassifier);
+    const weakService = new RequestsService(
+      {} as Repository<CustomerRequest>,
+      {} as DataSource,
+      stubClassifier,
+    );
     const weakController = new RequestsController(weakService);
     const dto = { message: 'just letting you know' } as ClassifyDto;
 

@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CustomerRequest, RequestStatus } from './customer-request.entity';
 import { ClassifyDto } from './dtos';
 import {
   ClassificationCategory,
   KeywordClassifier,
 } from './keyword-classifier';
+import { Classification } from './classification.entity';
 
 export type RequestListItem = {
   id: string;
@@ -25,6 +26,8 @@ export class RequestsService {
   constructor(
     @InjectRepository(CustomerRequest)
     private readonly requests: Repository<CustomerRequest>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
     private readonly classifier: KeywordClassifier,
   ) {}
 
@@ -112,13 +115,28 @@ export class RequestsService {
     }
 
     if (requestId) {
-      const existing = await this.getById(requestId);
-      existing.category = result.category;
-      existing.confidence = result.confidence;
-      if (existing.status === 'open') {
-        existing.status = 'in_progress';
-      }
-      await this.save(existing);
+      await this.dataSource.transaction(async (entityManager) => {
+        const existing = await entityManager.findOneBy(CustomerRequest, {
+          id: requestId,
+        });
+
+        if (!existing) throw new NotFoundException('Request is not found!');
+
+        existing.category = result.category;
+        existing.confidence = result.confidence;
+
+        if (existing.status === 'open') {
+          existing.status = 'in_progress';
+        }
+
+        await entityManager.save(existing);
+        await entityManager.insert(Classification, {
+          request: existing,
+          category: result.category,
+          confidence: result.confidence,
+          provider: 'keyword',
+        });
+      });
     }
 
     return {
