@@ -8,8 +8,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { RequestsService } from './requests.service';
-import { KeywordClassifier } from './keyword-classifier';
-import { RequestStatus } from './customer-request.entity';
 import { ClassifyDto, CreateDto, UpdateDto } from './dtos';
 
 @Controller('requests')
@@ -22,11 +20,8 @@ export class RequestsController {
   }
 
   @Get('history')
-  history(@Query('category') _category?: string) {
-    return {
-      items: [],
-      message: 'Classification history is not implemented yet.',
-    };
+  history(@Query('category') category?: string) {
+    return this.requestsService.getClassifications(category);
   }
 
   @Get(':id')
@@ -44,9 +39,6 @@ export class RequestsController {
     return this.requestsService.updateStatus(id, body.status);
   }
 
-  /**
-   * Classify a customer request. Business rules currently live in the controller.
-   */
   @Post('classify')
   async classify(@Body() body: ClassifyDto) {
     return this.requestsService.classify(body);

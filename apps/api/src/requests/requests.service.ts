@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { CustomerRequest, RequestStatus } from './customer-request.entity';
 import { ClassifyDto } from './dtos';
 import {
@@ -26,6 +26,8 @@ export class RequestsService {
   constructor(
     @InjectRepository(CustomerRequest)
     private readonly requests: Repository<CustomerRequest>,
+    @InjectRepository(Classification)
+    private readonly classifications: Repository<Classification>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly classifier: KeywordClassifier,
@@ -144,5 +146,19 @@ export class RequestsService {
       confidence: result.confidence,
       requestId: requestId ?? null,
     };
+  }
+
+  async getClassifications(category?: string) {
+    const where: FindOptionsWhere<Classification> = category
+      ? { category: category.trim() }
+      : {};
+
+    const list = await this.classifications.find({
+      where,
+      order: { createdAt: 'DESC' },
+      take: 100,
+    });
+
+    return list;
   }
 }
