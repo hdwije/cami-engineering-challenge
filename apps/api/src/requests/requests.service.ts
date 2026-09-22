@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CustomerRequest, RequestStatus } from './customer-request.entity';
-import { RequestNote } from './request-note.entity';
 import { ClassifyDto } from './dtos';
 import {
   ClassificationCategory,
@@ -113,7 +112,7 @@ export class RequestsService {
     }
 
     if (requestId) {
-      const existing: any = await this.getById(requestId);
+      const existing = await this.getById(requestId);
       existing.category = result.category;
       existing.confidence = result.confidence;
       if (existing.status === 'open') {
