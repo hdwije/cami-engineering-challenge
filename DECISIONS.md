@@ -15,9 +15,11 @@ Next I moved to Task 1. There issue was retrived each requests notes nestedly. B
 
 But still there is an issue that if the request count is getting higher we have to use pagination or load more feature for this.
 
+Then I moved to Task 2 which is the cached issue. Once we change the status or click the classify button it doesn't update the table. Because we just changed the date in the server database only. We don't refetch the updated details. So what I have done is invalidate the request query onSuccess and then it retrieve the updated data.
+
 ## Assumptions
 
-- - Returning the full list without pagination is the current intended behaviour, not a bug to fix as part of this task.
+- Returning the full list without pagination is the current intended behaviour, not a bug to fix as part of this task.
 
 ## Trade-offs
 
