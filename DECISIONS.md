@@ -23,6 +23,7 @@ Next moved to Task 5:
 - To insert a record to classification I had to update the classify function. But since it already has a insert query for update the custore_request table I used database transactions to run multiple queries. Within the transaction I added the insert and update functions. For this I had change the constructor of the requests.service. Since I changed the classify function I executed the test cases again and 2 cases were failed because I changed the constructor of the requests.service. I fixed the issues in test cases and executes it (I just change the object initializations of the test cases).
 - Retrieve classifications with 100 records cap. Newest first. That bound the oldest records unreachable. Since the signature doesn't have any paging params I made cape 100. Since I updated the constructor with the Classification repository, re-ran the test cases and got failed. Updated the test cases with the correct constructor.
 - RequestsService depended on concrete class which is violate the SOLID principles. I created an interface for the classifiers and implement it for keyword classifiar and the LLM classifier.
+- The /history page was a placeholder. It now lists the classification log (date and time, request message, category, confidence, provider) newest first. Form the backend I didn't retrieve complete Request object since unncessary data load. Instead just used request message and the id with classification details.
 
 ## Assumptions
 
