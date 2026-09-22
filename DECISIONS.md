@@ -17,13 +17,19 @@ But still there is an issue that if the request count is getting higher we have 
 
 Then I moved to Task 2 which is the cached issue. Once we change the status or click the classify button it doesn't update the table. Because we just changed the date in the server database only. We don't refetch the updated details. So what I have done is invalidate the request query onSuccess and then it retrieve the updated data.
 
+Then I moved to Task 4. There I have to bring the business logic to service layer. So I have to create the test cases for what currently controller validate and the return object. For request validation I install class-validator and class-transformer libraries and created a DTO class for classify request. So request body validated by the Validation Pipe and "Soften confidence for very short messages" and "Prefer "unknown" when confidence is weak." keeps in the same function body. Since I changed the controller I created a test cases for this in the "requests.controller.classify.test.ts" file and test it after done the changes.
+
 ## Assumptions
 
-- Returning the full list without pagination is the current intended behaviour, not a bug to fix as part of this task.
+- Taks 1: Returning the full list without pagination is the current intended behaviour, not a bug to fix as part of this task.
+
+- Task 4: The old endpoint returned a 201 with an error field when input was bad, since it returned a plain object instead of throwing. It now returns a 400 from the ValidationPipe. I checked the web app and nothing reads that error field.
 
 ## Trade-offs
 
-- In Task 1, because of the aggregated query it give less load on the Node process but high weight on the database server because each request it has to run a sub query. It doesn't care about the notes, but the requests.
+- Task 1: because of the aggregated query it give less load on the Node process but high weight on the database server because each request it has to run a sub query. It doesn't care about the notes, but the requests.
+
+- Task 4: Two libraries added. Bundle got bigger. Runtime cost is getting higher because every request is now transform into a class instance and validated. It is small cost. But it is not free.
 
 ## Classification history scope
 

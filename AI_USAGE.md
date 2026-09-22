@@ -4,6 +4,8 @@
 
 List the AI tools you used (Cursor, GitHub Copilot, Claude Code, ChatGPT, etc.).
 
+Claude Code
+
 ## How I used AI
 
 Briefly explain how you used AI during the challenge (exploring the codebase, drafting
@@ -13,9 +15,13 @@ Mostly for understanding unfamiliar parts of the stack and for reviewing my fixe
 
 Task 1: used Claude to review my query rewrite. The first version I wrote used getRawMany with manual aliases, which silently dropped the id field because TypeORM prefixes raw columns (request_id, not id). Caught it when the frontend broke. Switched to getRawAndEntities so the entity supplies the typed columns and raw only carries the two computed ones.
 
+Task 4: Used Claude Code in plan mode to generate tests for the classify endpoint, covering the DTO validation rules and the returned category and confidence. I added what are the validations should be included to the test cases and since I am in the plan mode I direct it to generate test cases step by step.
+
 ## What I changed or rejected
 
 Describe anything the AI suggested that you changed, corrected, or rejected.
+
+Task 4: The first plan it produced covered every request endpoint. That was more than the task asked for, so I rejected it and kept only the classify tests.
 
 ## Trade-offs
 
