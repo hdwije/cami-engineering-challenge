@@ -15,9 +15,11 @@ Next I moved to Task 1. There issue was retrived each requests notes nestedly. B
 
 But still there is an issue that if the request count is getting higher we have to use pagination or load more feature for this.
 
-Then I moved to Task 2 which is the cached issue. Once we change the status or click the classify button it doesn't update the table. Because we just changed the date in the server database only. We don't refetch the updated details. So what I have done is invalidate the request query onSuccess and then it retrieve the updated data.
+Then I moved to Task 2 which is the cached issue. Once we change the status or click the classify button it doesn't update the table. Because we just changed the data in the server database only. We don't refetch the updated details. So what I have done is invalidate the request query onSuccess and then it retrieve the updated data.
 
 Then I moved to Task 4. There I have to bring the business logic to service layer. So I have to create the test cases for what currently controller validate and the return object. For request validation I install class-validator and class-transformer libraries and created a DTO class for classify request. So request body validated by the Validation Pipe and "Soften confidence for very short messages" and "Prefer "unknown" when confidence is weak." keeps in the same function body. Since I changed the controller I created a test cases for this in the "requests.controller.classify.test.ts" file and test it after done the changes.
+
+Next moved to Task 5 and it tooks bit time to understand what is exact the requirement. To maintain the history of classifications I created a new entity call Classification and wire it with the classifications table. After create to to generate the migration file for "classifications create" I use claude code.
 
 ## Assumptions
 
@@ -25,15 +27,28 @@ Then I moved to Task 4. There I have to bring the business logic to service laye
 
 - Task 4: The old endpoint returned a 201 with an error field when input was bad, since it returned a plain object instead of throwing. It now returns a 400 from the ValidationPipe. I checked the web app and nothing reads that error field.
 
+- Task 5:
+  - A classification is append-only. Rows are never updated or deleted, so no updated_at column.
+  - The classifications table records what the classifier produced. Status changes are a side effect of classifying, not a classification, so status is not stored here.
+  - Deleting a request should delete its classification history, hence ON DELETE CASCADE. An audit system would keep them instead, but that is beyond this slice.
+  - Stored the provider name on each row so history stays meaningful once a second classifier exists. Without it you cannot tell which implementation produced a given result.
+  - Category is stored as text rather than a Postgres enum, so adding a category later does not need a migration.
+
 ## Trade-offs
 
-- Task 1: because of the aggregated query it give less load on the Node process but high weight on the database server because each request it has to run a sub query. It doesn't care about the notes, but the requests.
+- Task 1: because of the aggregated query it give less load on the Node process but high weight on the database server because each request it has to run a sub query. Cost now scales with the number of requests returned, not with the number of notes..
 
-- Task 4: Two libraries added. Bundle got bigger. Runtime cost is getting higher because every request is now transform into a class instance and validated. It is small cost. But it is not free.
+- Task 4: Two more libraries (class-validator and class-transformer) to keep updated over time. Every request also gets converted into a class instance and validated, which is a small cost on every call.
+
+- Task 5:
+  - Category as text, not a Postgres enum. Easy to add categories later, but the database no longer rejects a typo. The application type is the only guard.
 
 ## Classification history scope
 
 What you implemented for history / provider seam, and what you left out.
+
+- Created a new Entity called "Classification".
+- The table grows without bound, one row per classification click, and there is no retention policy. Not a problem at this scale, but it is the thing that would need attention first.
 
 ## Stretch (if any)
 

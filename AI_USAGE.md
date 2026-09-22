@@ -4,7 +4,8 @@
 
 List the AI tools you used (Cursor, GitHub Copilot, Claude Code, ChatGPT, etc.).
 
-Claude Code
+Claude (chat) for diagnosis, explanation and review.
+Claude Code in VS Code, mostly in plan mode, for test generation.
 
 ## How I used AI
 
@@ -17,11 +18,15 @@ Task 1: used Claude to review my query rewrite. The first version I wrote used g
 
 Task 4: Used Claude Code in plan mode to generate tests for the classify endpoint, covering the DTO validation rules and the returned category and confidence. I added what are the validations should be included to the test cases and since I am in the plan mode I direct it to generate test cases step by step.
 
+Task 5: For the newly created classification entity I had to create migration file by hand. For this I used claude code to write the migration file for classifications table.
+
 ## What I changed or rejected
 
 Describe anything the AI suggested that you changed, corrected, or rejected.
 
 Task 4: The first plan it produced covered every request endpoint. That was more than the task asked for, so I rejected it and kept only the classify tests.
+
+Task 5: Claude code created the classification migration file with request_id indexing. I was in the plan mode and I asked that indexing for request_id is not necessary since the filteration should be done by the category. So I prompted to set the indexing for the category.
 
 ## Trade-offs
 
