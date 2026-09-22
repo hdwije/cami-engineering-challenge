@@ -24,6 +24,7 @@ Next moved to Task 5:
 - Retrieve classifications with 100 records cap. Newest first. That bound the oldest records unreachable. Since the signature doesn't have any paging params I made cape 100. Since I updated the constructor with the Classification repository, re-ran the test cases and got failed. Updated the test cases with the correct constructor.
 - RequestsService depended on concrete class which is violate the SOLID principles. I created an interface for the classifiers and implement it for keyword classifiar and the LLM classifier.
 - The /history page was a placeholder. It now lists the classification log (date and time, request message, category, confidence, provider) newest first. Form the backend I didn't retrieve complete Request object since unncessary data load. Instead just used request message and the id with classification details.
+- Filter classification history by category. I used debounce technique to filter classifications by the category. Also improve the filtering function by adding the case insensitive filter for category in the database query.
 
 ## Assumptions
 
@@ -57,6 +58,7 @@ What you implemented for history / provider seam, and what you left out.
 - /requests/history does not validate the category value. The filter in the UI is free text, so an unrecognised value returning an empty list is the right behaviour. I didn't return 400 since it is not match with the UI. The column is also text rather than an enum, so new categories need no migration.
 - No unit test for getClassifications function in the requests.service. It is a thin repository query, so a test would mostly assert that TypeORM works. I put the test effort into the classification rules instead, since that is where the logic lives.
 - The service called KeywordClassifier directly, so using a different classifier would have meant changing the service. It now depends on a ClassificationProvider interface instead, and the module decides which implementation to supply. Adding an LLM classifier later is a one line change there.
+- Used debounce technique to filter classifications.
 
 ## Stretch (if any)
 
