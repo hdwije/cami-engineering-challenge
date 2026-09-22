@@ -20,7 +20,7 @@ export class Classification {
   confidence!: number | null;
 
   @Column({ type: 'varchar', nullable: true })
-  provider!: 'keyword' | 'llm';
+  provider!: string;
 
   @ManyToOne(() => CustomerRequest, (request) => request.classifications, {
     onDelete: 'CASCADE',

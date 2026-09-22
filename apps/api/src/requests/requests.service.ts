@@ -1,13 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { CustomerRequest, RequestStatus } from './customer-request.entity';
 import { ClassifyDto } from './dtos';
-import {
-  ClassificationCategory,
-  KeywordClassifier,
-} from './keyword-classifier';
 import { Classification } from './classification.entity';
+import {
+  CLASSIFICATION_PROVIDER,
+  ClassificationCategory,
+  ClassificationProvider,
+} from './classification-provider.interface';
 
 export type RequestListItem = {
   id: string;
@@ -30,7 +31,8 @@ export class RequestsService {
     private readonly classifications: Repository<Classification>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly classifier: KeywordClassifier,
+    @Inject(CLASSIFICATION_PROVIDER)
+    private readonly classifier: ClassificationProvider,
   ) {}
 
   async list(): Promise<RequestListItem[]> {
@@ -136,7 +138,7 @@ export class RequestsService {
           request: existing,
           category: result.category,
           confidence: result.confidence,
-          provider: 'keyword',
+          provider: this.classifier.name,
         });
       });
     }
