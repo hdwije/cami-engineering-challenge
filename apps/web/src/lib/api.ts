@@ -14,13 +14,14 @@ export type RequestListItem = {
   updatedAt: string;
 };
 
-export async function fetchRequests(): Promise<RequestListItem[]> {
-  const res = await fetch(`${API_URL}/requests`);
-  if (!res.ok) {
-    throw new Error(`Failed to load requests (${res.status})`);
-  }
-  return res.json();
-}
+export type HistoryItem = {
+  id: string;
+  category: string | null;
+  confidence: number | null;
+  provider: string;
+  createdAt: string;
+  request: { id: string; message: string };
+};
 
 export type CreatedRequest = {
   id: string;
@@ -29,6 +30,14 @@ export type CreatedRequest = {
   createdAt: string;
   updatedAt: string;
 };
+
+export async function fetchRequests(): Promise<RequestListItem[]> {
+  const res = await fetch(`${API_URL}/requests`);
+  if (!res.ok) {
+    throw new Error(`Failed to load requests (${res.status})`);
+  }
+  return res.json();
+}
 
 export async function createRequest(message: string): Promise<CreatedRequest> {
   const res = await fetch(`${API_URL}/requests`, {
@@ -69,7 +78,7 @@ export async function classifyMessage(message: string, requestId?: string) {
   return res.json();
 }
 
-export async function fetchHistory(category?: string) {
+export async function fetchHistory(category?: string): Promise<HistoryItem[]> {
   const qs = category ? `?category=${encodeURIComponent(category)}` : '';
   const res = await fetch(`${API_URL}/requests/history${qs}`);
   if (!res.ok) {

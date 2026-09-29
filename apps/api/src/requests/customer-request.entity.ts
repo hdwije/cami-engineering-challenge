@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { RequestNote } from './request-note.entity';
+import { Classification } from './classification.entity';
 
 export type RequestStatus = 'open' | 'in_progress' | 'resolved';
 
@@ -29,6 +30,9 @@ export class CustomerRequest {
 
   @OneToMany(() => RequestNote, (note) => note.request)
   notes!: RequestNote[];
+
+  @OneToMany(() => Classification, (classification) => classification.request)
+  classifications!: Classification[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
