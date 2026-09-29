@@ -6,9 +6,9 @@ import {
 
 @Injectable()
 export class LlmClassifier implements ClassificationProvider {
-  readonly name = 'keyword';
+  readonly name = 'llm';
 
-  classify(message: string): ClassificationResult {
+  classify(_message: string): ClassificationResult {
     return { category: 'unknown', confidence: 0.0 };
   }
 }
