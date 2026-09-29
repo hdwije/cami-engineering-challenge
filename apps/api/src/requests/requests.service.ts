@@ -155,7 +155,6 @@ export class RequestsService {
       .createQueryBuilder('c')
       .leftJoin('c.request', 'r')
       .addSelect(['r.id', 'r.message'])
-      .where(category ? 'c.category LIKE %:category%' : '1=1', { category })
       .orderBy('c.createdAt', 'DESC')
       .take(100);
 
